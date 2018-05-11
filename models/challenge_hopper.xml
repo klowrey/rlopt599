@@ -1,0 +1,94 @@
+<mujoco model="hopper">
+  <compiler angle="degree" coordinate="global" inertiafromgeom="true"/>
+  <default>
+    <joint armature="1" damping="1" limited="true"/>
+    <geom conaffinity="1" condim="1" contype="1" margin="0.001" material="geom" rgba="0.8 0.6 .4 1" solimp=".8 .8 .01" solref=".02 1"/>
+    <motor ctrllimited="true" ctrlrange="-.4 .4"/>
+  </default>
+  <option integrator="Euler" timestep="0.002" gravity="0 0 -9.81">
+    <flag sensornoise="disable"/>
+  </option>
+  <size nconmax="16" />
+  <worldbody>
+    <!--
+        <light cutoff="100" diffuse="1 1 1" dir="-0 0 -1.3" directional="true" exponent="1" pos="0 0 1.3" specular=".1 .1 .1"/>
+        <geom conaffinity="1" condim="3" name="floor" pos="0 0 0" rgba="0.8 0.9 0.8 1" size="20 20 .125" type="plane" material="MatPlane"/>
+        -->
+
+        <geom conaffinity="1" name='floor' pos='0 0 0' size='50 1 .125' type='plane' material="MatPlane" condim='3'/>
+        <light mode='targetbodycom' target='torso' directional='false' diffuse='.8 .8 .8' specular='0.3 0.3 0.3' pos='0 0 4.0' dir='0 0 -1'/>
+        <camera name='targeting' pos='1 1 2' mode='targetbodycom' target='torso'/>
+
+
+        <body name="torso" pos="0 0 1.25">
+          <joint armature="0" axis="1 0 0" damping="0" limited="false" name="rootx" pos="0 0 0" stiffness="0" type="slide"/>
+          <joint armature="0" axis="0 0 1" damping="0" limited="false" name="rootz" pos="0 0 0" ref="1.25" stiffness="0" type="slide"/>
+          <joint armature="0" axis="0 1 0" damping="0" limited="false" name="rooty" pos="0 0 1.25" stiffness="0" type="hinge"/>
+          <geom friction="0.9" fromto="0 0 1.45 0 0 1.05" name="torso_geom" size="0.05" type="capsule"/>
+          <body name="thigh" pos="0 0 1.05">
+            <joint axis="0 -1 0" name="thigh_joint" pos="0 0 1.05" range="-150 0" type="hinge"/>
+            <geom friction="0.9" fromto="0 0 1.05 0 0 0.6" name="thigh_geom" size="0.045" type="capsule"/>
+            <body name="leg" pos="0 0 0.35">
+              <joint axis="0 -1 0" name="leg_joint" pos="0 0 0.6" range="-150 0" type="hinge"/>
+              <geom friction="0.9" fromto="0 0 0.6 0 0 0.1" name="leg_geom" size="0.04" type="capsule"/>
+              <body name="foot" pos="0.13/2 0 0.1">
+                <joint axis="0 -1 0" name="foot_joint" pos="0 0 0.1" range="-45 45" type="hinge"/>
+                <geom friction="2.0" fromto="-0.13 0 0.1 0.26 0 0.1" name="foot_geom" size="0.06" type="capsule"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </worldbody>
+      <actuator>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="thigh_joint"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="leg_joint"/>
+        <motor ctrllimited="true" ctrlrange="-1.0 1.0" gear="200.0" joint="foot_joint"/>
+      </actuator>
+      <sensor>
+        <!--
+        <jointpos name='root_pos_1' joint='rootx' />
+        -->
+        <jointpos name='root_pos_2' joint='rootz' />
+        <jointpos name='root_pos_3' joint='rooty' />
+
+        <jointpos name='state_pos_1' joint='thigh_joint' />
+        <jointpos name='state_pos_2' joint='leg_joint' />
+        <jointpos name='state_pos_3' joint='foot_joint' />
+
+        <jointvel name='root_vel_1' joint='rootx' />
+        <jointvel name='root_vel_2' joint='rootz' />
+        <jointvel name='root_vel_3' joint='rooty' />
+
+        <jointvel name='state_vel_1' joint='thigh_joint' />
+        <jointvel name='state_vel_2' joint='leg_joint' />
+        <jointvel name='state_vel_3' joint='foot_joint' />
+
+        <!--
+    <framepos name='tip' objtype='site' objname='tip'/>
+    <framepos name='goal' objtype='site' objname='target'/>
+    -->
+  </sensor>
+  <!--
+  <asset>
+      <texture type="skybox" builtin="gradient" rgb1=".4 .5 .6" rgb2="0 0 0"
+          width="100" height="100"/>        
+      <texture builtin="flat" height="1278" mark="cross" markrgb="1 1 1" name="texgeom" random="0.01" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" type="cube" width="127"/>
+      <texture builtin="checker" height="100" name="texplane" rgb1="0.4 0.4 0.4" rgb2="0.8 0.8 0.8" type="2d" width="100"/>
+      <material name="MatPlane" reflectance="0.5" shininess="1" specular="1" texrepeat="60 60" texture="texplane"/>
+      <material name="geom" texture="texgeom" texuniform="true"/>
+  </asset>
+  -->
+<asset>
+  <texture type="skybox" builtin="gradient" width="128" height="128" rgb1=".4 .6 .8" 
+    rgb2="0 0 0"/>  
+  <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278" 
+    rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>  
+  <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" 
+    width="512" height="512"/>  
+
+  <material name='MatPlane' reflectance='0.5' texture="texplane" texrepeat="1 1" texuniform="true"/>
+  <material name='geom' texture="texgeom" texuniform="true"/>
+</asset>
+
+
+</mujoco>
