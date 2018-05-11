@@ -15,7 +15,14 @@ A number of management and utility functions are provided in the additional file
 To install we need to install some system things in Linux or OSX.
 
 ```bash
-sudo apt install build-essentials hdf5-tools libglfw3-dev libglew-dev # or osx brew equivalent
+# LINUX
+sudo apt install build-essentials hdf5-tools libglfw3-dev libglew-dev
+```
+
+```bash
+# macOS
+xcode-select --install
+brew install hdf5 glfw3 glew
 ```
 
 Then install Julia by downloading the correct software package from [their website](https://julialang.org/downloads/). A safe place you can extract to on Linux is `/opt/julia` or whereever else you have access; OSX will install to Applications.
@@ -23,8 +30,8 @@ Then install Julia by downloading the correct software package from [their websi
 You may also want to add the following to your `~/.bashrc` if you're on Linux or `~/.bash_profile` if on OSX:
 
 ```bash
-export JULIA_HOME=/opt/julia/bin                     # or other install directory
-export PATH=/opt/julia/bin:$PATH                     # if you'd like to have general access to julia
+export JULIA_HOME=/opt/julia/bin                     # OSX installs to /Applications/julia-0.6.app/Contents/Resources/julia/bin
+export PATH=$JULIA_HOME:$PATH                        # if you'd like to have general access to julia
 
 export JULIA_NUM_THREADS=4                           # or your system's number of CPUs
 

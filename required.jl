@@ -9,6 +9,7 @@ pkgs = ["JLD",
         "UnicodePlots",
         "Flux"]
 
+Pkg.update()
 installed = Pkg.installed()
 
 for p in pkgs
@@ -29,6 +30,6 @@ Pkg.checkout("LearningStrategies")
 
 using MuJoCo
 for p in pkgs
-   info("Preloading $p")
-   eval(parse("using $p"))
+   info("Preloading $(p[1])")
+   eval(parse("using $(p[1])"))
 end
