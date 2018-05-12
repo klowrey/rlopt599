@@ -62,6 +62,6 @@ julia> using ExpSim
 julia> simulate("/tmp/test_GLP") # or other saved directory
 ```
 
-In the screen that pops up, you can switch between viewing modes with ',' and '.' to see either the passive model used in the experiment, saved trajectories, or the saved policy running in real time. Other commands for the viewer can be found under ExpSim.jl or Sim.jl.
+In the screen that pops up, you can switch between viewing modes with ',' and '.' to see either the passive model used in the experiment, saved trajectories, or the saved policy running in real time. Other commands for the viewer can be found under ExpSim.jl or Sim.jl; you can also interact with the model by clicking on bodies and moving them around.
 
 
