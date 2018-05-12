@@ -59,7 +59,7 @@ In the Julia REPL, we can then view the output of the training/optimizing by doi
 julia> push!(LOAD_PATH, "./")
 julia> using ExpSim
 
-julia> simulate("/test_GLP") # or other saved directory
+julia> simulate("/tmp/test_GLP") # or other saved directory
 ```
 
 In the screen that pops up, you can switch between viewing modes with ',' and '.' to see either the passive model used in the experiment, saved trajectories, or the saved policy running in real time. Other commands for the viewer can be found under ExpSim.jl or Sim.jl.

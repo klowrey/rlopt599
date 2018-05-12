@@ -34,8 +34,8 @@ dtype = Float64
 my_mjsys       = mjw.load_model(model_file, skip, "normal")
 
 if METHOD == :NPG ######################################### NPG startup
-   #my_policy      = Policy.GLP{dtype}(my_mjsys.ns, my_mjsys.nu) # inputs: n, m
-   my_policy      = Policy.NN{dtype}(my_mjsys.ns, my_mjsys.nu, 32, 2) # inputs: n, m
+   my_policy      = Policy.GLP{dtype}(my_mjsys.ns, my_mjsys.nu) # inputs: n, m
+   #my_policy      = Policy.NN{dtype}(my_mjsys.ns, my_mjsys.nu, 32, 2) # inputs: n, m
 
    pgmodel        = PolicyGradModel(copy(my_policy.theta),
                                     my_mjsys,
