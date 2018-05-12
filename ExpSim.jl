@@ -5,7 +5,6 @@ module ExpSim
 using Sim
 using MuJoCo, Common, GLFW
 using Policy: getmean!, AbstractPolicy
-using ArgParse
 using mjWrap #: load_model, mjSet
 
 using JLD
