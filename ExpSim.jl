@@ -1,10 +1,13 @@
+
+
 __precompile__()
 
 module ExpSim
 
 using Sim
 using MuJoCo, Common, GLFW
-using Policy: getmean!, AbstractPolicy
+using Policy: getmean!, AbstractPolicy, loadpolicy
+using Flux
 using mjWrap #: load_model, mjSet
 
 using JLD
@@ -16,7 +19,7 @@ export simulate
 mutable struct ExpDisplay
    T::Int
    t::Int
-   numT::Int
+   K::Int
    k::Int
    nqnv::Int
    states::Array{Float64, 3}
@@ -31,22 +34,20 @@ mutable struct ExpDisplay
    myfuncs #::ExpFunctions.FunctionSet
 
    function ExpDisplay(mjsys, states, pol, skip)
-      nqnv, T, numT = size(states)
-      return new(T, 1, numT, 1, nqnv, states,
+      nqnv, T, K = size(states)
+      return new(T, 1, K, 1, nqnv, states,
                  pol, true, skip, runmodel, mjsys, nothing)
    end
 end
 
 function traj2state(exd::ExpDisplay)
-   t = exd.t
-   k = exd.k
-   m = exd.mjsys.m
-   d = exd.mjsys.d
+   t, k = exd.t, exd.k
+   m, d = exd.mjsys.m, exd.mjsys.d
    nq = mj.get(m, :nq)
    d.qpos .= exd.states[1:nq, t, k]
+   println(d.qpos')
    d.qvel .= exd.states[(nq+1):end, t, k]
    mj.forward(m, d)
-   exd.t += 1 # advance our saved trajectory pointer
 end
 
 function file2state(s::Simulation, exd::ExpDisplay) 
@@ -54,11 +55,13 @@ function file2state(s::Simulation, exd::ExpDisplay)
    if mod1(s.framenum, exd.skip) == exd.skip && s.lastframenum != s.framenum
       if (exd.t >= exd.T) 
          exd.t = 1  #start of new trajectory
-         exd.k = ifelse(exd.k >= exd.numT, 1, exd.k + 1)
+         exd.k += 1
+         if exd.k > exd.K exd.k = 1 end
          mj.set(s.d, :time, 0.0)
          @printf("Rendering Trajectory %d\n", exd.k)
       end
       traj2state(exd)
+      exd.t += 1 # advance our saved trajectory pointer
       s.lastframenum = s.framenum
    end
 end
@@ -67,8 +70,9 @@ function applypolicy(s::Simulation, exd::ExpDisplay)
    d = exd.mjsys.d
    if mod1(s.framenum, exd.skip) == exd.skip && s.lastframenum != s.framenum
       # Needs to eval the function loaded at run time
-      eval( :($(exd.myfuncs.observe!)($(exd.mjsys), 1, [$(d.qpos); $(d.qvel)], $(d.sensordata))) )
-      getmean!(d.ctrl, exd.pol, d.sensordata)
+      obs = zeros(exd.mjsys.ns)
+      eval( :($(exd.myfuncs.observe!)($(exd.mjsys), 1, [$(d.qpos); $(d.qvel)], $(obs))) )
+      getmean!(d.ctrl, exd.pol, obs)
       s.lastframenum = s.framenum
    end
 end
@@ -177,7 +181,7 @@ function render(s::Simulation, exd::Union{ExpDisplay,Void}, w::GLFW.Window)
 end
 
 function mycustomkeyboard(s::Simulation, exd::Union{ExpDisplay,Void}, window::GLFW.Window,
-                          key::Int32, scancode::Int32, act::Int32, mods::Int32)
+                          key::GLFW.Key, scancode::Int32, act::GLFW.Action, mods::Int32)
    if act == GLFW.RELEASE return end
 
    if exd != nothing # more than just model d
@@ -195,11 +199,11 @@ function mycustomkeyboard(s::Simulation, exd::Union{ExpDisplay,Void}, window::GL
       if exd.mode == rundata
          if mods & GLFW.MOD_SHIFT > 0
             if key == GLFW.KEY_RIGHT
-               exd.k += 1; if exd.k > exd.numT exd.k = 1 end
+               exd.k += 1; if exd.k > exd.K exd.k = 1 end
                exd.t = 1
                traj2state(exd)
             elseif key == GLFW.KEY_LEFT
-               exd.k -= 1; if exd.k < 1 exd.k = exd.numT end
+               exd.k -= 1; if exd.k < 1 exd.k = exd.K end
                exd.t = 1
                traj2state(exd)
             end
@@ -220,23 +224,17 @@ function mycustomkeyboard(s::Simulation, exd::Union{ExpDisplay,Void}, window::GL
    Sim.mykeyboard(s, window, key, scancode, act, mods)
 end
 
-function settings(args)
-   s = ArgParseSettings("Policy Gradient Experiment Launcher")
-   @add_arg_table s begin
-      "arg1"
-      help = "Load Model or Experiment Directory"
-   end
-   parsed_args = parse_args(args, s)
-   return parsed_args
-end
-
 macro preloadexp(dir)
    return quote
-      files = readdir($dir)
-      modelfile = $dir*"/"*files[find((x)->endswith(x, ".xml"), files)][1]
+      files        = readdir($dir)
+      modelfile    = $dir*"/"*files[find((x)->endswith(x, ".xml"), files)][1]
       functionfile = $dir*"/"*files[find((x)->endswith(x, "functions.jl"), files)][1]
-      polfile  = $dir*"/policy.jld"
-      datafile = $dir*"/data.jld"
+      polfile      = $dir*"/policy.jld"
+      if isfile($dir*"/mean.jld")
+         datafile  = $dir*"/mean.jld" #TODO HACK loading mean samples for POLO
+      else
+         datafile  = $dir*"/data.jld"
+      end
 
       #info("Loading Experiment $dir")
       #info("Model file: $modelfile")
@@ -248,14 +246,18 @@ macro preloadexp(dir)
       maxiter = indmax(expmt["stocR"])
 
       if isfile(polfile)
-         mypolicy, frameskip = load(polfile, "policy", "skip")
+         mypolicy, frameskip, _ = loadpolicy(polfile)
       else
          mypolicy = nothing 
          frameskip = 4
          warn("Can't load policy, or no policy to load")
       end
-      my_mjsys = mjw.load_model(modelfile, frameskip, "normal")
+      if isdefined(:ns) == false
+         ns = size(load(datafile, "obs"), 1)
+      end
+      my_mjsys = mjw.load_model(modelfile, frameskip, "normal", ns)
 
+      states = load(datafile, "state")
       exd = ExpDisplay( my_mjsys, load(datafile, "state"), mypolicy, frameskip)
 
       #exd.myfuncs = Main.myfuncs

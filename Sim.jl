@@ -64,7 +64,7 @@ end
 
 export Simulation
 
-const keycmds = Dict{Int, Function}(GLFW.KEY_F1=>(s)->begin  # help
+const keycmds = Dict{GLFW.Key, Function}(GLFW.KEY_F1=>(s)->begin  # help
                                          s.showhelp += 1
                                          if s.showhelp > 2 s.showhelp = 0 end
                                       end,
@@ -319,7 +319,7 @@ end
 
 ##################################################### callbacks
 function mykeyboard(s::Simulation, window::GLFW.Window,
-                    key::Int32, scancode::Int32, act::Int32, mods::Int32)
+                    key::GLFW.Key, scancode::Int32, act::GLFW.Action, mods::Int32)
    # do not act on release
    if act == GLFW.RELEASE return end
 
@@ -409,7 +409,7 @@ end
 
 # past data for double-click detection
 function mouse_button(s::Simulation, window::GLFW.Window,
-                      button::Int32, act::Int32, mods::Int32)
+                      button::Int32, act::GLFW.Action, mods::Int32)
    # update button state
    s.button_left = GLFW.GetMouseButton(window, GLFW.MOUSE_BUTTON_LEFT)
    s.button_middle = GLFW.GetMouseButton(window, GLFW.MOUSE_BUTTON_MIDDLE)
