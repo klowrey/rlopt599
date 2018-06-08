@@ -30,6 +30,6 @@ Pkg.checkout("LearningStrategies")
 
 using MuJoCo
 for p in pkgs
-   info("Preloading $(p[1])")
-   eval(parse("using $(p[1])"))
+   info("Preloading $(p)")
+   eval(parse("using $(p)"))
 end
